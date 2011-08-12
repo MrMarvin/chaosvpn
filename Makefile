@@ -20,6 +20,8 @@ OBJ=$(patsubst %.c,%.o,$(SRC))
 NAME?=chaosvpn
 GITDEBVERSION=$(shell debian/scripts/calcdebversion )
 
+_PHONY =
+
 $(NAME): main.o $(OBJ) $(HEADERS)
 	$(CC) $(LDFLAGS) -o $@ main.o $(OBJ) $(LIB) $(LIBDIRS)
 
@@ -34,12 +36,14 @@ y.tab.c y.tab.h: cvconf.y
 lex.yy.c: cvconf.l
 	$(LEX) --yylineno cvconf.l
 
+_PHONY += clean
 clean:
 	rm -f *.o y.tab.c y.tab.h lex.yy.c string/*.o httplib/*.o $(NAME)
 
 CHANGES:
 	[ -e .git/HEAD ] && git log >CHANGES
 
+_PHONY += install
 install:
 	strip $(NAME)
 	install -m 0755 -d $(DESTDIR)$(PREFIX)/share/man/man1
@@ -60,10 +64,12 @@ install:
 		echo "Created config File $(TINCDIR)/warzone.conf"; \
 	fi
 
+_PHONY += splint
 splint:
 	splint +posixlib +allglobals -type -mayaliasunique -predboolint \
 		-retvalint $(CFLAGS) main.c $(SRC)
 
+_PHONY += deb
 deb:
 	[ -n "$(GITDEBVERSION)" ] # check if gitversion is set
 	dpkg-checkbuilddeps
@@ -81,3 +87,4 @@ deb:
 	git checkout -- debian/changelog version.h
 	@echo -e "\nDebian build successfull.";
 
+.PHONY : $(_PHONY)
